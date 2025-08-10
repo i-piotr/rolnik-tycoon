@@ -4,7 +4,8 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 
-// Ustaw tytuł karty z wersją z package.json (wstrzykniętą przez Vite)
-document.title = `Rolnik TYCOON v${__APP_VERSION__}`;
+// Bezpiecznik: gdyby define w Vite kiedykolwiek nie zadziałało
+const V = (typeof __APP_VERSION__ !== "undefined") ? __APP_VERSION__ : "dev";
+document.title = `Rolnik TYCOON v${V}`;
 
 createRoot(document.getElementById("root")).render(<App />);
