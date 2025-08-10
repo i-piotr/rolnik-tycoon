@@ -3,39 +3,40 @@ name: Build & Release ZIP
 on:
   push:
     tags:
-      - "v*.*.*"   # uruchomi się po wypchnięciu taga, np. v0.8.4
-  workflow_dispatch:  # pozwala odpalić ręcznie z zakładki Actions
+      - 'v*.*.*'     # uruchamia się TYLKO przy tagach, np. v0.8.4
+  workflow_dispatch:  # można też odpalić ręcznie z Actions
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # pozwala dodać asset do Release
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-     - name: Set up Node
-  uses: actions/setup-node@v4
-  with:
-    node-version: '22'
-
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Install deps
-        run: npm install
+        run: npm ci || npm install
 
       - name: Validate project
         run: npm run validate
 
       - name: Make ZIP (without node_modules)
         run: |
-          ZIP="rolnik-tycoon-${{ github.ref_name }}.zip"
-          zip -r "$ZIP" . \
+          ZIP_NAME="rolnik-tycoon-${GITHUB_REF_NAME}.zip"
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+          zip -r "$ZIP_NAME" . \
             -x "node_modules/*" "dist/*" ".git/*" ".github/*" ".tmp-build/*" "package-lock.json"
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          files: rolnik-tycoon-${{ github.ref_name }}.zip
+          files: ${{ env.ZIP_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
