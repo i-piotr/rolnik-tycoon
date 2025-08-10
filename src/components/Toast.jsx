@@ -1,0 +1,16 @@
+import { useEffect } from "react";
+
+export default function Toast({ kind = "ok", text, onClose, ms = 2000 }) {
+  useEffect(() => {
+    const t = setTimeout(() => onClose?.(), ms);
+    return () => clearTimeout(t);
+  }, [onClose, ms]);
+
+  const base = "fixed right-3 top-3 z-[60] rounded-lg px-3 py-2 text-sm shadow border";
+  const styles =
+    kind === "error"
+      ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+      : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800";
+
+  return <div className={`${base} ${styles}`}>{text}</div>;
+}
