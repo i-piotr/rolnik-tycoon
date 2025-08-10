@@ -1,0 +1,41 @@
+name: Build & Release ZIP
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # uruchomi się po wypchnięciu taga, np. v0.8.4
+  workflow_dispatch:  # pozwala odpalić ręcznie z zakładki Actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'   # masz Node 22.x
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm install
+
+      - name: Validate project
+        run: npm run validate
+
+      - name: Make ZIP (without node_modules)
+        run: |
+          ZIP="rolnik-tycoon-${{ github.ref_name }}.zip"
+          zip -r "$ZIP" . \
+            -x "node_modules/*" "dist/*" ".git/*" ".github/*" ".tmp-build/*" "package-lock.json"
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: rolnik-tycoon-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
