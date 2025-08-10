@@ -14,11 +14,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'   # masz Node 22.x
-          cache: 'npm'
+     - name: Set up Node
+  uses: actions/setup-node@v4
+  with:
+    node-version: '22'
+
 
       - name: Install deps
         run: npm install
