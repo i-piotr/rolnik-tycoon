@@ -8,6 +8,7 @@ import Barn from "./components/Barn.jsx";
 import Market from "./components/Market.jsx";
 import Finance from "./components/Finance.jsx";
 import Jobs from "./components/Jobs.jsx";
+import TopBar from "./components/TopBar.jsx"; // ← DODANE
 import { NumberField, SelectField } from "./components/Forms.jsx";
 import { fmtHa, formatDatePL, seasonOf, validateArea, M2_PER_HA } from "./utils/format.js";
 import { loadSave, saveGame, clearSave } from "./utils/storage.js";
@@ -284,8 +285,16 @@ export default function App(){
     return sortPlots(list, buildSortKey, buildSortDir);
   },[plots, buildQuery, buildSortKey, buildSortDir]);
 
+  // ——— HUD labels do TopBar ———
+  const dayLabel = formatDatePL(date);
+  const seasonLabel = season;
+
   return (
     <div className="min-h-screen w-full bg-neutral-50 text-neutral-900">
+      {/* Sticky pasek na górze */}
+      <TopBar money={money} dayLabel={dayLabel} seasonLabel={seasonLabel} />
+
+      {/* Dotychczasowy Header (z przyciskami "Następny dzień" / "Reset") */}
       <Header
         version={APP_VER}
         dateLabel={formatDatePL(date)}
