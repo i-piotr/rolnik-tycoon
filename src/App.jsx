@@ -19,6 +19,10 @@ import { WINDOWS, inWindow, SOW_OUT_PENALTY, HARVEST_OUT_PENALTY } from "./data/
 import { BARN_CAPACITY_T, applyDailySpoilage } from "./data/storage.js";
 import { LABOR, mhPerDay, mhRequiredFor } from "./data/labor.js";
 
+// Auto-wersja z package.json (ustawiana w vite.config.js)
+const APP_VER =
+  typeof __APP_VERSION__ !== 'undefined' ? `v${__APP_VERSION__}` : 'dev';
+
 export default function App(){
   const restored = loadSave();
   const [date,setDate] = useState(restored? new Date(restored.dateISO): START_DATE);
@@ -283,7 +287,7 @@ export default function App(){
   return (
     <div className="min-h-screen w-full bg-neutral-50 text-neutral-900">
       <Header
-        version="v0.8.3 — praca (mh), zlecenia, siew/zbiór, pojemność stodoły"
+        version={APP_VER}
         dateLabel={formatDatePL(date)}
         season={season}
         daysPlayed={daysPlayed}
