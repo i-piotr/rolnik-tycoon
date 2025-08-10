@@ -1,6 +1,6 @@
 {
   "name": "rolnik-tycoon-vite",
-  "version": "0.8.3f",
+  "version": "0.8.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,9 +14,10 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^5.4.0",
-    "tailwindcss": "^3.4.10",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
+    "tailwindcss": "^3.4.10",
+    "vite": "^5.4.0"
   }
 }
