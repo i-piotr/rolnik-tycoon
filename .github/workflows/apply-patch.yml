@@ -1,9 +1,10 @@
 name: Apply Patch
+
 on:
   workflow_dispatch:
     inputs:
       patch:
-        description: "Wklej tu treść łatki (unified diff)"
+        description: "Wklej treść łatki (unified diff: diff --git / --- / +++)"
         required: true
         type: string
 
@@ -14,6 +15,7 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout (pełna historia)
         uses: actions/checkout@v4
@@ -25,29 +27,49 @@ jobs:
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
 
-            - name: Zapisz patch do pliku (heredoc RAW)
+      - name: Zapisz patch do pliku (ENV + printf)
         shell: bash
+        env:
+          PATCH_CONTENT: ${{ github.event.inputs.patch }}
         run: |
-          cat > patch.diff <<'PATCH'
-          ${{ github.event.inputs.patch }}
-          PATCH
+          set -e
+          printf '%s' "$PATCH_CONTENT" > patch.diff
           echo "Patch bytes: $(wc -c < patch.diff)"
           echo "Patch head:"
-          sed -n '1,10p' patch.diff || true
+          sed -n '1,12p' patch.diff || true
+          # weryfikacja, że to wygląda jak unified diff
+          grep -E '^(diff --git|--- |\+\+\+ )' patch.diff >/dev/null || { echo "🚫 To nie wygląda na unified diff (brak nagłówków)."; exit 1; }
           test -s patch.diff || { echo "🚫 Pusty patch"; exit 1; }
 
-      - name: Utwórz gałąź i nałóż łatkę (3-way, idempotent)
+      - name: Utwórz gałąź i spróbuj nałożyć patch (3-way → reject)
         shell: bash
         run: |
           set -euxo pipefail
           BR="grazynka/patch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           git switch -C "$BR"
-          if ! git apply --3way --whitespace=nowarn patch.diff; then
-            echo "3-way failed, trying --reject"
-            git apply --reject --whitespace=nowarn patch.diff
+
+          # 1) Próba 3-way
+          if git apply --3way --whitespace=nowarn patch.diff; then
+            echo "✅ git apply --3way OK"
+          else
+            echo "⚠️ 3-way failed, próbuję --reject (z plikami .rej)"
+            git apply --reject --whitespace=nowarn patch.diff || { echo "❌ git apply --reject też się wywalił"; exit 1; }
+            # jeśli powstały .rej, przerywamy i prosimy o nową łatkę pod HEAD
+            if compgen -G "**/*.rej" > /dev/null; then
+              echo "❌ Powstały pliki *.rej (konflikty). Nie robię commita."
+              echo "Lista .rej:"
+              find . -name '*.rej' -print
+              exit 1
+            fi
           fi
+
           git add -A
-          git commit -m "Grażynka patch ${GITHUB_RUN_ID}" || { echo "Nothing to commit — patch empty?"; exit 1; }
+          # jeżeli nic się nie zmieniło, kończymy z czytelnym komunikatem
+          if git diff --staged --quiet; then
+            echo "❌ Nothing to commit — patch nic nie zmienił (albo już był zastosowany)."
+            exit 1
+          fi
+          git commit -m "Grażynka patch ${GITHUB_RUN_ID}"
           git push -u origin "$BR"
 
       - name: Otwórz Pull Request
@@ -64,4 +86,4 @@ jobs:
               base: "main",
               body: "Automatycznie utworzony PR z łatką od Grażynki."
             });
-            core.notice(`PR: ${pr.html_url}`);
+            core.notice(`PR utworzony: ${pr.html_url}`);
