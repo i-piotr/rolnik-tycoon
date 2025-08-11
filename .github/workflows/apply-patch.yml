@@ -25,13 +25,16 @@ jobs:
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
 
-      - name: Zapisz patch do pliku (heredoc RAW)
+            - name: Zapisz patch do pliku (heredoc RAW)
         shell: bash
         run: |
           cat > patch.diff <<'PATCH'
-          ${{ inputs.patch }}
+          ${{ github.event.inputs.patch }}
           PATCH
           echo "Patch bytes: $(wc -c < patch.diff)"
+          echo "Patch head:"
+          sed -n '1,10p' patch.diff || true
+          test -s patch.diff || { echo "🚫 Pusty patch"; exit 1; }
 
       - name: Utwórz gałąź i nałóż łatkę (3-way, idempotent)
         shell: bash
