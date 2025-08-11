@@ -26,32 +26,29 @@ jobs:
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
 
-            - name: Decode patch
+      - name: Decode patch
         shell: bash
         run: |
           set -euo pipefail
-          # usuń spacje, taby i entery z inputu zanim zdekodujesz
           echo "${{ github.event.inputs.patch_b64 }}" | tr -d ' \t\r\n' | base64 -d > patch.diff
           echo "Patch bytes: $(wc -c < patch.diff)"
-          echo "Patch head:"
-          sed -n '1,12p' patch.diff || true
+          echo "Patch head:"; sed -n '1,12p' patch.diff || true
           grep -Eq '^(diff --git|--- |\+\+\+ )' patch.diff || { echo "Not a unified diff"; exit 1; }
-
 
       - name: Create branch and apply
         shell: bash
+        env:
+          BRANCH: grazynka/patch-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euxo pipefail
-          BR="grazynka/patch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          echo "BRANCH=$BR" >> "$GITHUB_ENV"
-          git switch -C "$BR"
+          git switch -C "$BRANCH"
           git apply --3way --whitespace=nowarn patch.diff || git apply --reject --whitespace=nowarn patch.diff
           if compgen -G "**/*.rej" > /dev/null; then
             echo "Conflicts (*.rej):"; find . -name '*.rej' -print; exit 1;
           fi
           git add -A
           if git diff --staged --quiet; then echo "Nothing to commit"; exit 1; fi
-          git commit -m "Apply patch $GITHUB_RUN_ID"
+          git commit -m "Apply patch ${{ github.run_id }}"
           git push -u origin "$BRANCH"
 
       - name: Open Pull Request
@@ -59,13 +56,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const head = process.env.BRANCH;
+            const head = `grazynka/patch-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
             const { data: pr } = await github.pulls.create({
               owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Patch ${context.runId}`,
-              head,
-              base: "main",
-              body: "PR utworzony automatycznie przez Apply Patch."
-            });
-            core.notice(`PR: ${pr.html_url}`);
+              repo: context.repo.r
