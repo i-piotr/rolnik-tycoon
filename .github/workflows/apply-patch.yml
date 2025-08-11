@@ -50,13 +50,15 @@ jobs:
           if git diff --staged --quiet; then echo "Nothing to commit"; exit 1; fi
           git commit -m "Apply patch ${{ github.run_id }}"
           git push -u origin "$BRANCH"
+          # zapisz nazwę gałęzi dla kolejnych kroków
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
-      - name: Open Pull Request
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const head = `grazynka/patch-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
-            const { data: pr } = await github.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.r
+      - name: Open PR (gh CLI)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Patch ${{ github.run_id }}" \
+            --body "Auto PR from Apply Patch workflow." \
+            --head "$BRANCH" \
+            --base "main"
