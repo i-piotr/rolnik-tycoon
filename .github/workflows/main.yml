@@ -15,39 +15,42 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (pełna historia)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Ustaw tożsamość i token
+      - name: Ustaw tożsamość Gita
         run: |
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
-      - name: Zapisz patch do pliku
-        run: printf "%s" "${{ github.event.inputs.patch }}" > /tmp/patch.diff
-
-      - name: Utwórz gałąź i nałóż łatkę (3-way)
+      - name: Zapisz patch do pliku (heredoc, bez psucia znaków)
         run: |
-          set -e
-          git switch -c grazynka/patch-${{ github.run_id }}
-          git apply --3way --whitespace=nowarn /tmp/patch.diff
+          cat > patch.diff <<'PATCH'
+          ${{ inputs.patch }}
+          PATCH
+
+      - name: Utwórz gałąź i nałóż łatkę (3-way, odporne na re-run)
+        run: |
+          set -euxo pipefail
+          BR="grazynka/patch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -C "$BR"
+          git apply --3way --whitespace=nowarn patch.diff
           git add -A
-          git commit -m "Grażynka patch ${{ github.run_id }}"
+          git commit -m "Grażynka patch ${GITHUB_RUN_ID}"
+          git push -u origin "$BR"
 
-      - name: Push
-        run: git push --set-upstream origin HEAD
-
-      - name: Otwórz PR
+      - name: Otwórz Pull Request
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const head = "grazynka/patch-" + context.runId;
+            const head = `grazynka/patch-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
             const { data: pr } = await github.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: "Grażynka: patch " + context.runId,
+              title: `Grażynka: patch ${context.runId}`,
               head,
               base: "main",
               body: "Automatycznie utworzony PR z łatką od Grażynki."
