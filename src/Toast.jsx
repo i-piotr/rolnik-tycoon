@@ -1,0 +1,46 @@
+import React, { useEffect } from "react";
+
+const palette = {
+  info:   { bar: "#2563eb" },
+  success:{ bar: "#16a34a" },
+  warn:   { bar: "#d97706" },
+  error:  { bar: "#dc2626" },
+};
+
+export default function Toast({ type="info", title="Info", message="", duration=3000, onClose=()=>{} }) {
+  useEffect(() => {
+    const id = setTimeout(onClose, duration);
+    return () => clearTimeout(id);
+  }, [duration, onClose]);
+
+  const color = (palette[type] || palette.info).bar;
+
+  return (
+    <div style={{ position: "fixed", top: 16, right: 16, zIndex: 1000, maxWidth: 380 }}>
+      <div style={{
+        background: "#ffffff",
+        borderRadius: 12,
+        boxShadow: "0 10px 25px rgba(0,0,0,.15)",
+        padding: "12px 16px",
+        display: "grid",
+        gridTemplateColumns: "6px auto 28px",
+        gap: 12,
+        alignItems: "start"
+      }}>
+        <div style={{ background: color, borderRadius: 6, width: 6, height: "100%" }}/>
+        <div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>{title}</div>
+          {message ? <div style={{ opacity: .9, lineHeight: 1.3 }}>{message}</div> : null}
+        </div>
+        <button aria-label="Zamknij" onClick={onClose} style={{
+          background: "transparent",
+          border: "none",
+          fontSize: 20,
+          lineHeight: 1,
+          cursor: "pointer",
+          opacity: .7
+        }}>×</button>
+      </div>
+    </div>
+  );
+}

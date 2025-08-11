@@ -9,7 +9,6 @@ import Market from "./components/Market.jsx";
 import Finance from "./components/Finance.jsx";
 import Jobs from "./components/Jobs.jsx";
 import TopBar from "./components/TopBar.jsx"; // ← DODANE
-import Toast from "./components/Toast.jsx";
 import { NumberField, SelectField } from "./components/Forms.jsx";
 import { fmtHa, formatDatePL, seasonOf, validateArea, M2_PER_HA } from "./utils/format.js";
 import { loadSave, saveGame, clearSave } from "./utils/storage.js";
@@ -20,13 +19,24 @@ import { priceFor } from "./data/prices.js";
 import { WINDOWS, inWindow, SOW_OUT_PENALTY, HARVEST_OUT_PENALTY } from "./data/windows.js";
 import { BARN_CAPACITY_T, applyDailySpoilage } from "./data/storage.js";
 import { LABOR, mhPerDay, mhRequiredFor } from "./data/labor.js";
+import Toast from './Toast';
 
 // Auto-wersja z package.json (ustawiana w vite.config.js)
 const APP_VER =
   typeof __APP_VERSION__ !== 'undefined' ? `v${__APP_VERSION__}` : 'dev';
 
 export default function App(){
-  const restored = loadSave();
+  
+  // [GRAZYNKA:TOAST:BEGIN]
+  const [toastItem, setToastItem] = useState(null);
+
+// Ustaw global gToast po zamontowaniu komponentu (stabilne także w HMR)
+useEffect(() => {
+  window.gToast = (opts) => setToastItem({ type: 'info', duration: 3000, ...opts });
+  return () => { try { delete window.gToast; } catch {} };
+}, []);
+  // [GRAZYNKA:TOAST:END]
+const restored = loadSave();
   const [date,setDate] = useState(restored? new Date(restored.dateISO): START_DATE);
   const [message,setMessage] = useState(null);
   const [plots,setPlots] = useState(()=>{
@@ -47,7 +57,7 @@ export default function App(){
   const [buildSortKey,setBuildSortKey] = useState(restored?.ui?.buildSortKey ?? "name");
   const [buildSortDir,setBuildSortDir] = useState(restored?.ui?.buildSortDir ?? "asc");
   const [buildQuery,setBuildQuery] = useState(restored?.ui?.buildQuery ?? "");
-  const [toast, setToast] = useState(null);
+  
 
   useEffect(()=>{
     saveGame({ dateISO: date.toISOString(), plots, money, inventory, ledger, jobs, ui:{
@@ -295,7 +305,11 @@ export default function App(){
     <div className="min-h-screen w-full bg-neutral-50 text-neutral-900">
       {/* Sticky pasek na górze */}
       <TopBar money={money} dayLabel={dayLabel} seasonLabel={seasonLabel} />
-       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+        {/* [GRAZYNKA:TOAST:BEGIN] */}
+        {toastItem && <Toast {...toastItem} onClose={() => setToastItem(null)} />}
+        {/* [GRAZYNKA:TOAST:END] */}
+
+       
 
 
       {/* Dotychczasowy Header (z przyciskami "Następny dzień" / "Reset") */}

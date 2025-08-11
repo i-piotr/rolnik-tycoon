@@ -1,5 +1,5 @@
-/* global __APP_VERSION__ */
 import { useEffect, useState } from "react";
+import { APP_VERSION } from "../version";
 
 function Stat({ label, value }) {
   return (
@@ -11,7 +11,8 @@ function Stat({ label, value }) {
 }
 
 export default function TopBar({ money, dayLabel, seasonLabel }) {
-  const version = (typeof __APP_VERSION__ !== "undefined") ? __APP_VERSION__ : "dev";
+  // numer wersji pochodzi z package.json -> tools/update-version.ps1 -> src/version.ts
+  const version = APP_VERSION;
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
