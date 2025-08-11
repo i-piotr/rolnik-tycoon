@@ -4,16 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       patch:
-        description: "Wklej treść łatki (unified diff: diff --git / --- / +++)"
-        required: false
-        type: string
-      patch_b64:
-        description: "ALTERNATYWA: ta sama łatka, ale zakodowana base64"
-        required: false
-        type: string
-      patch_url:
-        description: "ALTERNATYWA: URL do surowego pliku z łatką (RAW)"
-        required: false
+        description: "Wklej unified diff (diff --git / --- / +++)"
+        required: true
         type: string
 
 permissions:
@@ -29,86 +21,60 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ustaw tożsamość Gita
+      - name: Konfiguruj Git
         run: |
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
 
-      - name: Pobierz / zbuduj patch.diff
+      - name: Zapisz patch (heredoc — bez psucia)
         shell: bash
-        env:
-          PATCH_RAW: ${{ github.event.inputs.patch }}
-          PATCH_B64: ${{ github.event.inputs.patch_b64 }}
-          PATCH_URL: ${{ github.event.inputs.patch_url }}
         run: |
-          set -euo pipefail
-          if [ -n "${PATCH_URL:-}" ]; then
-            echo "Tryb: URL"
-            curl -fsSL "$PATCH_URL" -o patch.diff
-          elif [ -n "${PATCH_B64:-}" ]; then
-            echo "Tryb: base64"
-            echo "$PATCH_B64" | base64 -d > patch.diff
-          elif [ -n "${PATCH_RAW:-}" ]; then
-            echo "Tryb: RAW tekst"
-            printf '%s' "$PATCH_RAW" > patch.diff
-          else
-            echo "🚫 Nie podano żadnego wejścia (patch/patch_b64/patch_url)."
-            exit 1
-          fi
-
+          set -e
+          cat > patch.diff <<'PATCH'
+          ${{ github.event.inputs.patch }}
+          PATCH
           echo "Patch bytes: $(wc -c < patch.diff)"
           echo "Patch head:"
           sed -n '1,12p' patch.diff || true
+          grep -Eq '^(diff --git|--- |\+\+\+ )' patch.diff || { echo "To nie wygląda na unified diff."; exit 1; }
 
-          # sanity: sprawdź, że wygląda jak unified diff
-          if ! grep -Eq '^(diff --git|--- |\+\+\+ )' patch.diff; then
-            echo "🚫 To nie wygląda na unified diff. Upewnij się, że zaczyna się od 'diff --git ...'"
-            exit 1
-          fi
-
-      - name: Nałóż łatkę na nową gałąź (3-way → reject)
+      - name: Utwórz gałąź i nałóż patch
         shell: bash
         run: |
           set -euxo pipefail
           BR="grazynka/patch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "BRANCH=$BR" >> "$GITHUB_ENV"
           git switch -C "$BR"
-
-          if git apply --3way --whitespace=nowarn patch.diff; then
-            echo "✅ git apply --3way OK"
-          else
-            echo "⚠️ 3-way failed, próbuję --reject"
-            git apply --reject --whitespace=nowarn patch.diff
-            if compgen -G "**/*.rej" > /dev/null; then
-              echo "❌ Powstały *.rej (konflikty). Przerywam."
-              find . -name '*.rej' -print
-              exit 1
-            fi
-          fi
-
-          git add -A
-          if git diff --staged --quiet; then
-            echo "❌ Nothing to commit — patch nic nie zmienił (albo już zastosowany)."
+          git apply --3way --whitespace=nowarn patch.diff || git apply --reject --whitespace=nowarn patch.diff
+          if compgen -G "**/*.rej" > /dev/null; then
+            echo "Konflikty (*.rej):"
+            find . -name '*.rej' -print
             exit 1
           fi
-          git commit -m "Grażynka patch ${GITHUB_RUN_ID}"
-          git push -u origin "$BR"
+
+      - name: Commit & push
+        shell: bash
+        run: |
+          git add -A
+          if git diff --staged --quiet; then
+            echo "Nothing to commit — patch nic nie zmienił (albo już był)."
+            exit 1
+          fi
+          git commit -m "Apply patch $GITHUB_RUN_ID"
+          git push -u origin "$BRANCH"
 
       - name: Otwórz Pull Request
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          BRANCH_NAME: grażynka/patch-${{ github.run_id }}-${{ github.run_attempt }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const head = `grazynka/patch-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
+            const head = process.env.BRANCH;
             const { data: pr } = await github.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Grażynka: patch ${context.runId}`,
+              title: `Patch ${context.runId}`,
               head,
               base: "main",
-              body: "Automatycznie utworzony PR z łatką od Grażynki."
+              body: "PR utworzony automatycznie przez Apply Patch."
             });
-            core.notice(`PR utworzony: ${pr.html_url}`);
+            core.notice(`PR: ${pr.html_url}`);
