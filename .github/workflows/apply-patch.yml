@@ -3,9 +3,13 @@ name: Apply Patch
 on:
   workflow_dispatch:
     inputs:
+      patch:
+        description: "Unified diff (diff --git / --- / +++) — opcjonalnie, polecam patch_b64"
+        required: false
+        type: string
       patch_b64:
-        description: "Base64-encoded unified diff (diff --git / --- / +++)"
-        required: true
+        description: "Base64-encoded unified diff (najpewniejsze)"
+        required: false
         type: string
 
 permissions:
@@ -26,11 +30,22 @@ jobs:
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
 
-      - name: Decode patch
+      - name: Build patch.diff (raw or base64)
         shell: bash
+        env:
+          PATCH_RAW: ${{ github.event.inputs.patch }}
+          PATCH_B64: ${{ github.event.inputs.patch_b64 }}
         run: |
           set -euo pipefail
-          echo "${{ github.event.inputs.patch_b64 }}" | tr -d ' \t\r\n' | base64 -d > patch.diff
+          if [ -n "${PATCH_B64:-}" ]; then
+            echo "Mode: base64"
+            echo "$PATCH_B64" | tr -d ' \t\r\n' | base64 -d > patch.diff
+          elif [ -n "${PATCH_RAW:-}" ]; then
+            echo "Mode: raw"
+            printf '%s' "$PATCH_RAW" > patch.diff
+          else
+            echo "No patch provided (patch or patch_b64)."; exit 1
+          fi
           echo "Patch bytes: $(wc -c < patch.diff)"
           echo "Patch head:"; sed -n '1,12p' patch.diff || true
           grep -Eq '^(diff --git|--- |\+\+\+ )' patch.diff || { echo "Not a unified diff"; exit 1; }
@@ -50,7 +65,6 @@ jobs:
           if git diff --staged --quiet; then echo "Nothing to commit"; exit 1; fi
           git commit -m "Apply patch ${{ github.run_id }}"
           git push -u origin "$BRANCH"
-          # zapisz nazwę gałęzi dla kolejnych kroków
           echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
       - name: Open PR (gh CLI)
@@ -60,5 +74,4 @@ jobs:
           gh pr create \
             --title "Patch ${{ github.run_id }}" \
             --body "Auto PR from Apply Patch workflow." \
-            --head "$BRANCH" \
-            --base "main"
+            --
