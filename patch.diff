@@ -1,0 +1,9 @@
+diff --git a/PATCH_TEST.txt b/PATCH_TEST.txt
+new file mode 100644
+index 0000000..8f5b1ee
+--- /dev/null
++++ b/PATCH_TEST.txt
+@@ -0,0 +3 @@
++This confirms Apply Patch workflow works.
++Timestamp: 2025-08-11
++Grazynka
