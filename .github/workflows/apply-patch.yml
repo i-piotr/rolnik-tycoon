@@ -26,15 +26,17 @@ jobs:
           git config user.name "grazynka-bot"
           git config user.email "bot@example.local"
 
-      - name: Decode patch
+            - name: Decode patch
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "${{ github.event.inputs.patch_b64 }}" | base64 -d > patch.diff
+          # usuń spacje, taby i entery z inputu zanim zdekodujesz
+          echo "${{ github.event.inputs.patch_b64 }}" | tr -d ' \t\r\n' | base64 -d > patch.diff
           echo "Patch bytes: $(wc -c < patch.diff)"
           echo "Patch head:"
           sed -n '1,12p' patch.diff || true
           grep -Eq '^(diff --git|--- |\+\+\+ )' patch.diff || { echo "Not a unified diff"; exit 1; }
+
 
       - name: Create branch and apply
         shell: bash
