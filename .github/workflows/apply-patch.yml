@@ -1,0 +1,64 @@
+name: Apply Patch
+on:
+  workflow_dispatch:
+    inputs:
+      patch:
+        description: "Wklej tu treść łatki (unified diff)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (pełna historia)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ustaw tożsamość Gita
+        run: |
+          git config user.name "grazynka-bot"
+          git config user.email "bot@example.local"
+
+      - name: Zapisz patch do pliku (heredoc RAW)
+        shell: bash
+        run: |
+          cat > patch.diff <<'PATCH'
+          ${{ inputs.patch }}
+          PATCH
+          echo "Patch bytes: $(wc -c < patch.diff)"
+
+      - name: Utwórz gałąź i nałóż łatkę (3-way, idempotent)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          BR="grazynka/patch-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git switch -C "$BR"
+          if ! git apply --3way --whitespace=nowarn patch.diff; then
+            echo "3-way failed, trying --reject"
+            git apply --reject --whitespace=nowarn patch.diff
+          fi
+          git add -A
+          git commit -m "Grażynka patch ${GITHUB_RUN_ID}" || { echo "Nothing to commit — patch empty?"; exit 1; }
+          git push -u origin "$BR"
+
+      - name: Otwórz Pull Request
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const head = `grazynka/patch-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
+            const { data: pr } = await github.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Grażynka: patch ${context.runId}`,
+              head,
+              base: "main",
+              body: "Automatycznie utworzony PR z łatką od Grażynki."
+            });
+            core.notice(`PR: ${pr.html_url}`);
