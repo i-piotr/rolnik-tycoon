@@ -1,9 +1,22 @@
-diff --git a/PATCH_TEST.txt b/PATCH_TEST.txt
-new file mode 100644
-index 0000000..8f5b1ee
---- /dev/null
-+++ b/PATCH_TEST.txt
-@@ -0,0 +3 @@
-+This confirms Apply Patch workflow works.
-+Timestamp: 2025-08-11
-+Grazynka
+diff --git a/src/components/Toast.jsx b/src/components/Toast.jsx
+deleted file mode 100644
+index 8f5b1ee..0000000
+--- a/src/components/Toast.jsx
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import { useEffect } from "react";
+-
+-export default function Toast({ kind = "ok", text, onClose, ms = 2000 }) {
+-  useEffect(() => {
+-    const t = setTimeout(() => onClose?.(), ms);
+-    return () => clearTimeout(t);
+-  }, [onClose, ms]);
+-
+-  const base = "fixed right-3 top-3 z-[60] rounded-lg px-3 py-2 text-sm shadow border";
+-  const styles =
+-    kind === "error"
+-      ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800"
+-      : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800";
+-
+-  return <div className={`${base} ${styles}`}>{text}</div>;
+-}
