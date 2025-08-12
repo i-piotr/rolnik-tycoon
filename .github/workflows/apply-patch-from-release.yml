@@ -1,0 +1,74 @@
+name: Apply Patch (from Release)
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "grazynka-bot"
+          git config user.email "bot@example.local"
+
+      - name: Download patch asset(s)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euxo pipefail
+          mkdir -p patches
+          # pobierz .patch
+          gh release download "$GITHUB_REF_NAME" --pattern '*.patch' --dir patches || true
+          # pobierz .zip (jeśli .patch nie ma)
+          gh release download "$GITHUB_REF_NAME" --pattern '*.zip' --dir patches || true
+          ls -la patches || true
+          # rozpakuj patche z .zip (jeśli są)
+          shopt -s nullglob
+          for z in patches/*.zip; do unzip -jo "$z" '*.patch' -d patches; done
+          set +e
+          cnt=$(ls patches/*.patch 2>/dev/null | wc -l)
+          set -e
+          if [ "$cnt" -eq 0 ]; then
+            echo "No *.patch found in release assets"; exit 1
+          fi
+
+      - name: Apply patch(es)
+        env:
+          BRANCH: grazynka/release-${{ github.ref_name }}
+        run: |
+          set -euxo pipefail
+          git switch -C "$BRANCH"
+          for p in patches/*.patch; do
+            echo "Applying: $p"
+            git apply --3way --whitespace=nowarn "$p" || git apply --reject --whitespace=nowarn "$p"
+          done
+          if compgen -G "**/*.rej" > /dev/null; then
+            echo "Conflicts (*.rej) found:"; find . -name '*.rej' -print; exit 1
+          fi
+          rm -f patches/*.patch || true
+          git add -A
+          if git diff --staged --quiet; then echo "Nothing to commit"; exit 1; fi
+          git commit -m "Apply patches from release ${{ github.ref_name }}"
+          git push -u origin "$BRANCH"
+
+      - name: Open PR (gh CLI)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: grazynka/release-${{ github.ref_name }}
+        run: |
+          gh pr create \
+            --title "Apply patches from release ${{ github.ref_name }}" \
+            --body "Auto-PR: patches from release ${{ github.ref_name }}." \
+            --head "$BRANCH" \
+            --base "main"
