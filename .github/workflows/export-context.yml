@@ -1,0 +1,64 @@
+name: Export Context (attach to release)
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate context
+        shell: bash
+        run: |
+          set -euxo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          OUT="grazynka-context.md"
+          echo "# Grażynka Context – ${TAG}" > "$OUT"
+          echo "" >> "$OUT"
+          echo "## Repo" >> "$OUT"
+          echo "- Tag: ${TAG}" >> "$OUT"
+          echo "- Commit: $(git rev-parse --short HEAD)" >> "$OUT"
+          echo "- Branch at release: $(git name-rev --name-only HEAD || true)" >> "$OUT"
+          echo "" >> "$OUT"
+
+          echo "## package.json" >> "$OUT"
+          echo '```json' >> "$OUT"
+          cat package.json >> "$OUT"
+          echo '```' >> "$OUT"
+          echo "" >> "$OUT"
+
+          echo "## src/ — lista plików" >> "$OUT"
+          echo '```text' >> "$OUT"
+          git ls-tree -r --name-only HEAD | grep '^src/' | sort >> "$OUT"
+          echo '```' >> "$OUT"
+          echo "" >> "$OUT"
+
+          echo "## Wyszukane wzorce (ułatwiają dopasowanie patchy)" >> "$OUT"
+          echo "Szuka: GRAZYNKA:, APP_VERSION, __APP_VERSION__, TopBar, Toast, App.jsx/tsx" >> "$OUT"
+          echo '```text' >> "$OUT"
+          (grep -nER "GRAZYNKA:|APP_VERSION|__APP_VERSION__|TopBar|Toast" src || true) >> "$OUT"
+          echo '```' >> "$OUT"
+          echo "" >> "$OUT"
+
+          echo "## Konfiguracja narzędzi (skróty)" >> "$OUT"
+          echo "- Node/JS moduły: $(jq -r '.type // "commonjs"' package.json 2>/dev/null || echo 'unknown')" >> "$OUT"
+          echo "- Vite config: $(test -f vite.config.ts && echo vite.config.ts || (test -f vite.config.js && echo vite.config.js || echo 'brak'))" >> "$OUT"
+          echo "" >> "$OUT"
+
+          ls -lh "$OUT"
+
+      - name: Upload context as release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euxo pipefail
+          gh release upload "$GITHUB_REF_NAME" "grazynka-context.md" --clobber
