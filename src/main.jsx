@@ -1,11 +1,10 @@
-/* global __APP_VERSION__ */
 import "./index.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
+import { APP_VERSION } from "./version";
 
-// Bezpiecznik: gdyby define w Vite kiedykolwiek nie zadziałało
-const V = (typeof __APP_VERSION__ !== "undefined") ? __APP_VERSION__ : "dev";
-document.title = `Rolnik TYCOON v${V}`;
+// Wersja z src/version.ts
+document.title = `Rolnik TYCOON v${APP_VERSION}`;
 
 createRoot(document.getElementById("root")).render(<App />);
