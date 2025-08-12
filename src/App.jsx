@@ -21,9 +21,9 @@ import { BARN_CAPACITY_T, applyDailySpoilage } from "./data/storage.js";
 import { LABOR, mhPerDay, mhRequiredFor } from "./data/labor.js";
 import Toast from './Toast';
 
+import { APP_VERSION } from "./version";
 // Auto-wersja z package.json (ustawiana w vite.config.js)
-const APP_VER =
-  typeof __APP_VERSION__ !== 'undefined' ? `v${__APP_VERSION__}` : 'dev';
+const APP_VER = `v${APP_VERSION}`;
 
 export default function App(){
   
