@@ -1,1 +1,0 @@
-# Grażynka OK
