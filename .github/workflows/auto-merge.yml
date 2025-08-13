@@ -1,0 +1,25 @@
+name: Auto-merge labeled PRs
+
+on:
+  pull_request_target:
+    types: [labeled, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: read
+
+jobs:
+  automerge:
+    # uruchamiaj tylko, jeśli PR ma etykietę 'automerge'
+    if: contains(github.event.pull_request.labels.*.name, ''automerge'')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge when CI is green
+        uses: peter-evans/auto-merge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
+          delete-branch: true
+          required-labels: ci:green,automerge
+          blocking-labels: ci:red
