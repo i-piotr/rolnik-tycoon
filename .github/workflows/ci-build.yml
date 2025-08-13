@@ -19,8 +19,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # UWAGA: bez cache, żeby nie wymagał lockfile'a
-          # cache: 'npm'
+          # cache: 'npm'  # wyłączone — cache wymaga lockfile
 
       - name: Install deps
         run: |
