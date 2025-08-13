@@ -12,7 +12,7 @@ permissions:
 jobs:
   automerge:
     # uruchamiaj tylko, jeśli PR ma etykietę 'automerge'
-    if: contains(github.event.pull_request.labels.*.name, ''automerge'')
+    if: contains(github.event.pull_request.labels.*.name, 'automerge')
     runs-on: ubuntu-latest
     steps:
       - name: Auto-merge when CI is green
