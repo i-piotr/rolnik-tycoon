@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   automerge:
-    # Uruchamiaj tylko, jeśli PR ma etykietę 'automerge'
+    # uruchamiaj tylko, jeśli PR ma etykietę 'automerge'
     if: contains(github.event.pull_request.labels.*.name, 'automerge')
     runs-on: ubuntu-latest
     steps:
@@ -21,10 +21,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           merge-method: squash
           delete-branch: true
-          # PR musi mieć obie etykiety:
           required-labels: ci:green,automerge
-          # Jeśli jest 'ci:red' – blokuj
           blocking-labels: ci:red
-          # (opcjonalnie) czekanie na checki, domyślnie action poczeka aż przejdą
-          # delay: 10
-          # retries: 60
