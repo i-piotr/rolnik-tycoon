@@ -1,0 +1,59 @@
+﻿diff --git a/src/App.jsx b/src/App.jsx
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@
+ const APP_VER =
+   typeof __APP_VERSION__ !== 'undefined' ?  : 'dev';
++// [GRAŻYNKA:AGRO] pakiety uprawek z ugoru
++const AGRO_PREP_MH_PER_HA = { cereals: 6, potato: 10 };
++const isCereal = (cropId) => cropId !== 'ziemniak' && cropId !== 'ziemniaki';
+@@
+-  const plot = { id:\p_\_\\, name, areaM2: res.m2, type: showForm||"arable", crop: showForm==="arable"?"trawa":undefined, grow: null, tilled: false };
++  const plot = { id:\p_\_\\, name, areaM2: res.m2, type: showForm||"arable", crop: showForm==="arable"?"trawa":undefined, grow: null, tilled: false, preparedFor: null };
+@@
+ function addSow(plotId, cropId){
+   const p = plots.find(x=>x.id===plotId);
+   if (!p || p.type!=="arable") return;
+   const areaHa = p.areaM2 / 10000;
+   if (!p.tilled){
+     const prepReq = mhRequiredFor("prep", null, areaHa);
+     addJob({ type:"prep", plotId, plotName: p.name, mhRequired: prepReq });
+   }
++  // [GRAŻYNKA:AGRO] – automatyczny pakiet uprawek z ugoru
++  const target = isCereal(cropId) ? 'cereals' : 'potato';
++  if ((p.crop === 'ugor') && p.preparedFor !== target){
++    const perHa = AGRO_PREP_MH_PER_HA[target] ?? 6;
++    const mhRequired = Math.max(1, Math.round(perHa * areaHa));
++    addJob({ type:"agro_prep", plotId, plotName: p.name, prepFor: target, mhRequired });
++  }
+   const sowReq = mhRequiredFor("sow", cropId, areaHa);
+   addJob({ type:"sow", plotId, plotName: p.name, cropId, mhRequired: sowReq });
+ }
+@@
+-    if (j.type === "sow"){
++    if (j.type === "sow"){
+       const meta = CROP_META[j.cropId];
+       const sowOK = inWindow(date, (WINDOWS[j.cropId]||{}).sow);
+       const sowPenalty = sowOK ? 1 : SOW_OUT_PENALTY;
+       setPlots(prev=> prev.map(p=> p.id===j.plotId ? {
+         ...p,
+         crop: j.cropId,
+         tilled: false,
++        preparedFor: null,
+         grow: meta && meta.growable ? {
+           growable: true,
+           growthDaysRequired: meta.growthDays,
+           growthDaysElapsed: 0,
+           isReady: false,
+           yieldPerHa: meta.yieldPerHa,
+           sowDateISO: date.toISOString(),
+           sowPenalty
+         } : null
+       } : p));
+       return;
+     }
++    if (j.type === "agro_prep"){
++      setPlots(prev => prev.map(p => p.id === j.plotId ? { ...p, preparedFor: j.prepFor } : p));
++      setMessage(\Przygotowano ugór pod \.\);
++      return;
++    }
