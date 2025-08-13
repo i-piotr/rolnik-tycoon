@@ -1,0 +1,41 @@
+﻿diff --git a/src/components/TopBar.jsx b/src/components/TopBar.jsx
+--- a/src/components/TopBar.jsx
++++ b/src/components/TopBar.jsx
+@@
+-export default function TopBar({ money, dayLabel, seasonLabel }) {
++export default function TopBar({ money, dayLabel, seasonLabel, onNextTurn }) {
+@@
+-        <div className="flex items-center gap-6">
++        <div className="flex items-center gap-6">
++          <button
++            onClick={onNextTurn}
++            className="rounded-lg border px-2 py-1 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
++            aria-label="Kolejna tura"
++          >
++            ▶ Kolejna tura
++          </button>
+           <Stat label="Kasa" value={${Number(money ?? 0).toLocaleString("pl-PL")} zł} />
+diff --git a/src/App.jsx b/src/App.jsx
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@
+-      <TopBar money={money} dayLabel={dayLabel} seasonLabel={seasonLabel} />
++      <TopBar money={money} dayLabel={dayLabel} seasonLabel={seasonLabel} onNextTurn={nextTurn} />
+@@
+-      <Header
+-        version={APP_VER}
+-        dateLabel={formatDatePL(date)}
+-        season={season}
+-        daysPlayed={daysPlayed}
+-        money={money}
+-        onNextTurn={nextTurn}
+-        onReset={()=>setShowReset(true)}
+-      />
++      <Header
++        version={APP_VER}
++        dateLabel={formatDatePL(date)}
++        season={season}
++        daysPlayed={daysPlayed}
++        money={money}
++        onReset={()=>setShowReset(true)}
++      />
