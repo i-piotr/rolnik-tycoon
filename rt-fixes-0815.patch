@@ -1,0 +1,165 @@
+--- a/src/Toast.jsx
++++ b/src/Toast.jsx
+@@ -1,4 +1,4 @@
+-import React, { useEffect } from "react";
+
++import React, { useEffect, useRef } from "react";
+
+ 
+
+ const palette = {
+
+   info:   { bar: "#2563eb" },
+
+@@ -8,10 +8,12 @@
+ };
+
+ 
+
+ export default function Toast({ type="info", title="Info", message="", duration=3000, onClose=()=>{} }) {
+
++  const onCloseRef = useRef(onClose);
+
++  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+   useEffect(() => {
+
+-    const id = setTimeout(onClose, duration);
+
++    const id = setTimeout(() => { try { onCloseRef.current && onCloseRef.current(); } catch {} }, duration);
+
+     return () => clearTimeout(id);
+
+-  }, [duration, onClose]);
+
++  }, [duration]);
+
+ 
+
+   const color = (palette[type] || palette.info).bar;
+
+ 
+
+--- a/src/components/Market.jsx
++++ b/src/components/Market.jsx
+@@ -32,7 +32,11 @@
+                       <button
+
+                         onClick={()=>{
+
+                           const val = parseFloat(qty[id]);
+
+-                          if (!isNaN(val) && val>0) onSell(id, val);
+
++                          const have = inventory[id] || 0;
+
++                        if (!isNaN(val) && val>0 && val <= have) {
+
++                          onSell(id, val);
+
++                          setQty(q=>({...q,[id]: ""}));
+
++                        }
+
+                         }}
+
+                         className="rounded-lg px-2 py-1 border hover:bg-gray-50"
+
+                       >Sprzedaj</button>
+
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -314,6 +314,21 @@
+         {toastItem && <Toast {...toastItem} onClose={() => setToastItem(null)} />}
+
+         {/* [GRAZYNKA:TOAST:END] */}
+
+ 
+
++        {/* Reset gry — potwierdzenie */}
+
++        {showReset && (
+
++          <Modal
+
++            title="Reset gry"
+
++            onClose={() => setShowReset(false)}
+
++            footer={<>
+
++              <button onClick={() => setShowReset(false)} className="rounded-lg border px-3 py-1.5">Anuluj</button>
+
++              <button onClick={performReset} className="rounded-lg border px-3 py-1.5 bg-red-600 text-white border-red-700">Resetuj</button>
+
++            </>}
+
++          >
+
++            <p>Na pewno? To skasuje zapis gry i przywróci stan początkowy.</p>
+
++          </Modal>
+
++        )}
+
++
+
++
+
+        
+
+ 
+
+ 
+
+--- a/src/components/TopBar.jsx
++++ b/src/components/TopBar.jsx
+@@ -10,7 +10,7 @@
+   );
+
+ }
+
+ 
+
+-export default function TopBar({ money, dayLabel, seasonLabel, onNextTurn }) {
+
++export default function TopBar({ money, dayLabel, seasonLabel, onNextTurn, onReset }) {
+
+   // numer wersji pochodzi z package.json -> tools/update-version.ps1 -> src/version.ts
+
+   const version = APP_VERSION;
+
+   const [dark, setDark] = useState(false);
+
+@@ -51,6 +51,7 @@
+           <Stat label="Kasa" value={`${Number(money ?? 0).toLocaleString("pl-PL")} zł`} />
+
+           <Stat label="Dzień" value={dayLabel ?? "-"} />
+
+           <Stat label="Sezon" value={seasonLabel ?? "-"} />
+
++          <button onClick={onReset} aria-label="Reset gry" className="rounded-lg border px-2 py-1 text-xs hover:bg-neutral-100 active:scale-[.99] transition border-neutral-200 dark:border-neutral-700">🔄 Reset</button>
+
+           <button
+
+             onClick={toggleTheme}
+
+             className="rounded-lg border px-2 py-1 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+
+--- a/vite.config.mjs
++++ b/vite.config.mjs
+@@ -1,6 +1,6 @@
+ import { defineConfig } from 'vite'
+
+ import react from '@vitejs/plugin-react'
+
+-import pkg from './package.json' with { type: 'json' }
+
++import pkg from './package.json' assert { type: 'json' }
+
+ 
+
+ // https://vitejs.dev/config/
+
+ export default defineConfig({
+

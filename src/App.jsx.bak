@@ -313,21 +313,7 @@ const restored = loadSave();
  />
         {/* [GRAZYNKA:TOAST:BEGIN] */}
         {toastItem && <Toast {...toastItem} onClose={() => setToastItem(null)} />}
-        
-
-        {/* Reset gry — potwierdzenie */}
-        {showReset && (
-          <Modal
-            title="Reset gry"
-            onClose={() => setShowReset(false)}
-            footer={<>
-              <button onClick={() => setShowReset(false)} className="rounded-lg border px-3 py-1.5">Anuluj</button>
-              <button onClick={performReset} className="rounded-lg border px-3 py-1.5 bg-red-600 text-white border-red-700">Resetuj</button>
-            </>}
-          >
-            <p>Na pewno? To skasuje zapis gry i przywróci stan początkowy.</p>
-          </Modal>
-        )}
+        {/* [GRAZYNKA:TOAST:END] */}
 
        
 
