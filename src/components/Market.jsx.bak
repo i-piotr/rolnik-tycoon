@@ -32,11 +32,7 @@ export default function Market({ date, inventory, onSell }){
                       <button
                         onClick={()=>{
                           const val = parseFloat(qty[id]);
-                          const have = inventory[id] || 0;
-                        if (!isNaN(val) && val>0 && val <= have) {
-                          onSell(id, val);
-                          setQty(q=>({...q,[id]: ''}));
-                        }
+                          if (!isNaN(val) && val>0) onSell(id, val);
                         }}
                         className="rounded-lg px-2 py-1 border hover:bg-gray-50"
                       >Sprzedaj</button>

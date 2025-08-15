@@ -8,12 +8,10 @@ const palette = {
 };
 
 export default function Toast({ type="info", title="Info", message="", duration=3000, onClose=()=>{} }) {
-  const onCloseRef = useRef(onClose);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
-    const id = setTimeout(() => { try { onCloseRef.current && onCloseRef.current(); } catch {} }, duration);
+    const id = setTimeout(onClose, duration);
     return () => clearTimeout(id);
-  }, [duration]);
+  }, [duration, onClose]);
 
   const color = (palette[type] || palette.info).bar;
 
