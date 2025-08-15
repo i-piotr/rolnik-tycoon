@@ -14,6 +14,10 @@ $packageJson.version = $newVersion
 # write package.json as UTF-8 without BOM
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText("package.json", ($packageJson | ConvertTo-Json -Depth 10) + "`n", $utf8NoBom)
+# Zaktualizuj src/version.ts zgodnie z package.json
+powershell -ExecutionPolicy Bypass -File tools/update-version.ps1
+git add src/version.ts | Out-Null
+
 
 Write-Host "New version: $newVersion" -ForegroundColor Green
 git add package.json

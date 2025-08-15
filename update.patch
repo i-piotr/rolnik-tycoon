@@ -1,0 +1,38 @@
+--- a/src/Toast.jsx
++++ b/src/Toast.jsx
+@@ -8,7 +8,7 @@
+  * @param {string} [type="info"] - info, success, warning, error
+  * @param {string} [title="Info"]
+  */
+-export default function Toast({ type="info", title="Info", message="", duration=3000, onClose=()=>{} }) {
++export default function Toast({ type="info", title, message="", duration=3000, onClose=()=>{} }) {
+     const toastRef = useRef(null);
+ 
+     useEffect(() => {
+@@ -33,7 +33,7 @@
+     return (
+         <div ref={toastRef} className={`toast toast--${type}`}>
+             <div className="toast__content">
+-                <h3 className="toast__title">{title}</h3>
++                <h3 className="toast__title">{title ?? "Powiadomienie"}</h3>
+                 <p className="toast__message">{message}</p>
+             </div>
+             <div className="toast__close" onClick={handleClose}>×</div>
+--- a/src/utils/storage.js
++++ b/src/utils/storage.js
+@@ -1,5 +1,2 @@
+-/* global __APP_VERSION__ */
+-
+-const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'dev';
+-export const SAVE_KEY = `rolnik-tycoon-save-v${APP_VERSION}`;
++import { APP_VERSION } from "../version";
++export const SAVE_KEY = `rolnik-tycoon-save-v${APP_VERSION || 'dev'}`;
+ 
+ export const saveData = (data) => {
+     try {
+--- a/src/version.ts
++++ b/src/version.ts
+@@ -1,2 +1,2 @@
+-export const APP_VERSION = "0.8.21";
++export const APP_VERSION = "0.8.22";
+ export default APP_VERSION;

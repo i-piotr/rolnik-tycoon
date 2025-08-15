@@ -304,7 +304,12 @@ const restored = loadSave();
   return (
     <div className="min-h-screen w-full bg-neutral-50 text-neutral-900">
       {/* Sticky pasek na górze */}
-      <TopBar money={money} dayLabel={dayLabel} seasonLabel={seasonLabel} />
+      <TopBar
+  money={money}
+  dayLabel={dayLabel}
+  seasonLabel={seasonLabel}
+  onNextTurn={nextTurn}
+/>
         {/* [GRAZYNKA:TOAST:BEGIN] */}
         {toastItem && <Toast {...toastItem} onClose={() => setToastItem(null)} />}
         {/* [GRAZYNKA:TOAST:END] */}
@@ -319,7 +324,6 @@ const restored = loadSave();
         season={season}
         daysPlayed={daysPlayed}
         money={money}
-        onNextTurn={nextTurn}
         onReset={()=>setShowReset(true)}
       />
 

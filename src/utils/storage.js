@@ -1,7 +1,4 @@
-/* global __APP_VERSION__ */
-
-// Bezpiecznik na wypadek braku define w Vite
-const APP_VERSION = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'dev';
+import { APP_VERSION } from "../version";
 export const SAVE_KEY = `rolnik-tycoon-save-v${APP_VERSION}`;
 const LEGACY_PREFIX = 'rolnik-tycoon-save-v';
 

@@ -7,7 +7,14 @@ export default function Header({ version, dateLabel, season, daysPlayed, money, 
       <div className="flex items-center gap-3"><span className="text-xl font-bold">Rolnik TYCOON</span><Badge>{version}</Badge></div>
       <div className="flex items-center gap-4">
         <Stat label="Data" value={dateLabel} /><Stat label="Sezon" value={season} /><Stat label="Dni gry" value={daysPlayed} /><Stat label="Pieniądze" value={<span>{money.toLocaleString("pl-PL")} zł</span>} />
-        <button onClick={onNextTurn} className="rounded-2xl px-4 py-2 bg-emerald-600 text-white font-semibold shadow hover:shadow-md active:scale-[.99] transition">Kolejna tura (+1 dzień)</button>
-        <button onClick={onReset} className="rounded-2xl px-3 py-2 border text-red-700 hover:bg-red-50">Reset gry</button>
+        {onNextTurn && (
+  <button
+    onClick={onNextTurn}
+    className="rounded-2xl px-4 py-2 border bg-neutral-50 hover:bg-neutral-100 active:scale-[.99] transition"
+  >
+    Kolejna tura (+1 dzień)
+  </button>
+)}
+
       </div></div></header>);
 }

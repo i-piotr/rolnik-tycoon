@@ -10,7 +10,7 @@ function Stat({ label, value }) {
   );
 }
 
-export default function TopBar({ money, dayLabel, seasonLabel }) {
+export default function TopBar({ money, dayLabel, seasonLabel, onNextTurn }) {
   // numer wersji pochodzi z package.json -> tools/update-version.ps1 -> src/version.ts
   const version = APP_VERSION;
   const [dark, setDark] = useState(false);
@@ -40,6 +40,14 @@ export default function TopBar({ money, dayLabel, seasonLabel }) {
           </span>
         </div>
         <div className="flex items-center gap-6">
+          {/* Kolejna tura (po lewej od Kasy) */}
+<button
+  onClick={onNextTurn}
+  className="rounded-lg border px-3 py-1.5 text-xs hover:bg-neutral-100 active:scale-[.99] transition border-neutral-200 dark:border-neutral-700"
+  aria-label="Kolejna tura"
+>
+  ▶ Kolejna tura
+</button>
           <Stat label="Kasa" value={`${Number(money ?? 0).toLocaleString("pl-PL")} zł`} />
           <Stat label="Dzień" value={dayLabel ?? "-"} />
           <Stat label="Sezon" value={seasonLabel ?? "-"} />
