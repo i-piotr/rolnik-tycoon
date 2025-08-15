@@ -1,24 +1,24 @@
 {
-    "name":  "rolnik-tycoon-vite",
-    "version":  "0.8.23",
-    "private":  true,
-    "type":  "module",
-    "scripts":  {
-                    "dev":  "vite",
-                    "validate":  "node scripts/validate.js",
-                    "build":  "vite build",
-                    "preview":  "vite preview",
-                    "version":  "powershell -ExecutionPolicy Bypass -File tools/update-version.ps1 \u0026\u0026 git add src/version.ts"
-                },
-    "dependencies":  {
-                         "react":  "^18.2.0",
-                         "react-dom":  "^18.2.0"
-                     },
-    "devDependencies":  {
-                            "@vitejs/plugin-react":  "^5.0.0",
-                            "autoprefixer":  "^10.4.0",
-                            "postcss":  "^8.4.0",
-                            "tailwindcss":  "^3.4.10",
-                            "vite":  "^5.4.0"
-                        }
+    "name": "rolnik-tycoon-vite",
+    "version": "0.8.24",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "validate": "node scripts/validate.js",
+        "build": "vite build",
+        "preview": "vite preview",
+        "version": "powershell -ExecutionPolicy Bypass -File tools/update-version.ps1 && git add src/version.ts"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^5.0.0",
+        "autoprefixer": "^10.4.0",
+        "postcss": "^8.4.0",
+        "tailwindcss": "^3.4.10",
+        "vite": "^5.4.0"
+    }
 }
